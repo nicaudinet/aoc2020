@@ -10,7 +10,7 @@ version:             0.1.0.0
 -- license:
 license-file:        LICENSE
 author:              Nicolas Audinet
-maintainer:          nicolas.audinet@relexsolutions.com
+maintainer:          nic.audinet27@gmail.com
 -- copyright:
 -- category:
 build-type:          Simple
@@ -25,5 +25,20 @@ executable day1
   other-modules:
     Paths_aoc2020
   -- other-extensions:
-  build-depends:       base >=4.13 && <4.14
-  default-language:    Haskell2010
+  build-depends:
+    base >=4.12 && <4.14
+  default-language:
+    Haskell2010
+
+executable day2
+  main-is:
+    Day2.hs
+  hs-source-dirs:
+    days
+  other-modules:
+    Paths_aoc2020
+  -- other-extensions:
+  build-depends:
+    base >=4.12 && <4.14
+  default-language:
+    Haskell2010
