@@ -20,8 +20,8 @@ parseBags str = map parseBag (splitOn "," str)
 
 parseRule :: String -> (String, [(Int, String)])
 parseRule rule =
-  let (bag:rest) = splitOn "contain" rule
-  in ((unwords . init . words $ bag), parseBags (head rest))
+  let [bag, rest] = splitOn " bags contain" rule
+  in (bag, parseBags rest)
 
 parseRules :: String -> Rules
 parseRules = M.fromList . map parseRule . lines
