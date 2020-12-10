@@ -1,8 +1,10 @@
 module Main where
 
 import Paths_aoc2020
-import Data.List.Split
 
+import Data.List.Split
+import Data.Monoid (Sum(..))
+import Data.Bool (bool)
 import qualified Data.Map as M
 
 type Rules = M.Map String [(Int, String)]
@@ -18,14 +20,14 @@ parseBags str = map parseBag (splitOn "," str)
 
 parseRule :: String -> (String, [(Int, String)])
 parseRule rule =
-  let (bag:rest) = splitOn "contain" rule
-  in ((unwords . init . words $ bag), parseBags (head rest))
+  let [bag, rest] = splitOn " bags contain" rule
+  in (bag, parseBags rest)
 
 parseRules :: String -> Rules
 parseRules = M.fromList . map parseRule . lines
 
-containsShinyGold :: Rules -> [Bool]
-containsShinyGold rules = map contains (M.keys rules)
+containsShinyGold :: Rules -> [Sum Int]
+containsShinyGold rules = map (Sum . bool 0 1 . contains) (M.keys rules)
   where
     containsMap :: M.Map String Bool
     containsMap = fmap (fn . map snd) rules
@@ -70,9 +72,9 @@ main = do
   putStrLn "-- Test --"
   let testRules = parseRules test
   mapM_ print (M.toList testRules)
-  print (length $ filter id $ containsShinyGold testRules)
+  print (mconcat $ containsShinyGold testRules)
   print (numBags testRules)
   putStrLn "-- Real --"
-  print (length $ filter id $ containsShinyGold rules)
+  print (mconcat $ containsShinyGold rules)
   print (numBags rules)
 
