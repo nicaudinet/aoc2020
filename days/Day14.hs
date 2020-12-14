@@ -74,16 +74,18 @@ run = foldl' (flip step) (DecodeState [] M.empty)
 memSum :: DecodeState -> Int
 memSum = sum . M.elems . mem
 
+
+
 type Address = [Bool]
 type AddressMap = M.Map Int (S.Set Address)
 data DecodeStateV2 = DecodeStateV2
   { maskV2 :: [MaskBit]
   , addrMap :: AddressMap
-  }
+ }
   deriving Show
 
 space :: [MaskBit] -> Address -> S.Set Address
-space mask addr = S.fromList $ go (zip mask addr)
+space mask addr = S.fromList . go $ zip mask addr
   where
     go :: [(MaskBit, Bool)] -> [Address]
     go [] = [[]]
@@ -100,8 +102,11 @@ stepV2 (Mem (addr, value)) (DecodeStateV2 mask addrMap) =
       newAddrMap = M.insert value addrSpace (M.map (S.\\ addrSpace) addrMap)
   in DecodeStateV2 mask newAddrMap
 
-memSumV2 :: DecodeStateV2 -> Int
-memSumV2 = M.foldrWithKey (\k v i -> k * v + i) 0 . M.map S.size . addrMap
+memSumV2 :: DecodeStateV2 -> Integer
+memSumV2
+  = M.foldrWithKey (\k v i -> (fromIntegral k) * (fromIntegral v) + i) 0
+  . M.map (fromIntegral . S.size)
+  . addrMap
 
 runV2 :: [Command] -> DecodeStateV2
 runV2 = foldl' (flip stepV2) (DecodeStateV2 [] M.empty)
@@ -114,16 +119,34 @@ test = parse . unlines $
   , "mem[26] = 1"
   ]
 
+test2 :: [Command]
+test2 = parse . unlines $
+  [ "mask = 1110X1110XXX101X0011010X110X10X0110X"
+  , "mem[40257] = 51331021"
+  ]
+
+showAddrSpace :: S.Set [Bool] -> String
+showAddrSpace =
+  unlines . map (map (\x -> if x then '1' else '0')) . reverse . S.toList
+
+showKeyValue :: (Int, S.Set [Bool]) -> String
+showKeyValue (k, v) = unlines ["---", show k, showAddrSpace v]
+
+showMap :: M.Map Int (S.Set [Bool]) -> String
+showMap = unlines . map showKeyValue . M.toList
+
 main :: IO ()
 main = do
   commands <- fmap parse . readFile =<< getDataFileName "inputs/day14"
+  mapM_ print commands
   print (memSum $ run commands)
-  print (runV2 test)
   putStrLn "---"
-  mapM_ putStrLn . map (map (\x -> if x then '1' else '0')) . S.toList $
+  putStrLn . showAddrSpace $
     space
       (reverse [M0, MX, M1, M0, M0, M1, MX])
       (reverse [False, True, False, True, False, True, False])
   putStrLn "---"
+  putStrLn (showMap . addrMap $ runV2 test)
   print (memSumV2 $ runV2 test)
+  print (memSumV2 $ runV2 test2)
   print (memSumV2 $ runV2 commands)
