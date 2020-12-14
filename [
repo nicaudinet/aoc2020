@@ -1,0 +1,107 @@
+{-# LANGUAGE RecordWildCards #-}
+
+module Main where
+
+import Paths_aoc2020
+
+import Control.Applicative
+import qualified Data.Bits.Bitwise as B
+import qualified Data.Map as M
+import Data.List
+import Data.List.Split
+
+data MaskBit = M1 | M0 | MX
+  deriving Show
+
+parseMaskBit :: Char -> MaskBit
+parseMaskBit 'X' = MX
+parseMaskBit '1' = M1
+parseMaskBit '0' = M0
+parseMaskBit _ = error "strange mask bit"
+
+parseMask :: String -> Maybe Command
+parseMask str
+  | isPrefixOf "mask = " str =
+      Just . Mask . map parseMaskBit $ drop (length "mask = ") str
+  | otherwise = Nothing
+
+type MemAddress = (Int, Int) 
+
+parseMem :: String -> Maybe Command
+parseMem str
+  | isPrefixOf "mem[" str =
+      let [addr, value] = splitOn " = " str
+      in Just $ Mem (read (drop (length "mem[") (init addr)), read value)
+  | otherwise = Nothing
+
+data Command = Mask [MaskBit] | Mem MemAddress
+  deriving Show
+
+parseLine :: String -> Command
+parseLine = maybe (error "failed parse") id . (\s -> parseMask s <|> parseMem s)
+
+parse :: String -> [Command]
+parse = map parseLine . lines
+
+
+
+data DecodeState = DecodeState
+  { mask :: [MaskBit]
+  , mem :: M.Map Int Int
+  }
+  deriving Show
+
+applyMaskBit :: (MaskBit, Bool) -> Bool
+applyMaskBit (MX, b) = b
+applyMaskBit (M1, b) = True
+applyMaskBit (M0, b) = False
+
+asBitsLE :: Int -> ([Bool] -> [Bool]) -> Int
+asBitsLE num fn = B.fromListLE (fn (B.toListLE num))
+
+applyMask :: [MaskBit] -> Int -> Int
+applyMask mask num = asBitsLE num (map applyMaskBit . zip (reverse mask))
+
+step :: Command -> DecodeState -> DecodeState
+step (Mask bits) state = state { mask = bits }
+step (Mem (addr, num)) DecodeState{..} =
+  DecodeState mask (M.insert addr (applyMask mask num) mem)
+
+run :: [Command] -> DecodeState
+run = foldl' (flip step) (DecodeState [] M.empty)
+
+memSum :: DecodeState -> Int
+memSum = sum . M.elems . mem
+
+
+data AddrBit = A0 | A1 | ABoth
+
+data DecodeStateV2 = DecodeStateV2
+  { maskV2 :: [MaskBit]
+  , memV2 :: M.Map Int [AddrBit]
+  }
+
+applyAddrBit :: (MaskBit, Bool) -> AddrBit
+applyAddrBit (MX, _) = ABoth
+applyAddrBit (M1, _) = A1
+applyAddrBit (M0, True) = A1
+applyAddrBit (M0, False) = A0
+
+applyMaskV2 :: [MaskBit] -> Int -> [AddrBit]
+applyMaskV2 mask =
+  map applyAddrBit . zip (reverse mask) . (<> repeat False) . B.toListLE
+
+-- stepV2 :: Command -> DecodeState -> DecodeState
+-- stepV2 (Mask bits) state = state { mask = bits }
+-- stepV2 (Mem (addr, value)) DecodeState{..} =
+--   let newMem = foldr (\a m -> M.insert a value m) mem (applyMaskV2 mask addr)
+--   in DecodeState mask newMem
+
+-- runV2 :: [Command] -> DecodeState
+-- runV2 = foldl' (flip stepV2) (DecodeState [] M.empty)
+
+main :: IO ()
+main = do
+  commands <- fmap parse . readFile =<< getDataFileName "inputs/day14"
+  print (memSum $ run commands)
+  print (memSum $ runV2 commands)

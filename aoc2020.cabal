@@ -210,3 +210,20 @@ executable day13
     , split
   default-language:
     Haskell2010
+
+executable day14
+  main-is:
+    Day14.hs
+  hs-source-dirs:
+    days
+  other-modules:
+    Paths_aoc2020
+  -- other-extensions:
+  build-depends:
+      base >=4.12 && <4.14
+    , array
+    , bitwise
+    , containers
+    , split
+  default-language:
+    Haskell2010
