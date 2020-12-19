@@ -34,7 +34,7 @@ initGameState initValues =
     , prevMap = M.fromList (zip (init initValues) [1..])
     }
 
-applyNStrict :: NFData a => Int -> (a -> a) -> a -> a
+applyNStrict :: Int -> (GameState -> GameState) -> GameState -> GameState
 applyNStrict 0 _ n = n
 applyNStrict accum fn n = applyNStrict (accum - 1) fn $!! (fn n)
 
@@ -48,15 +48,15 @@ run initValues stop =
 main :: IO ()
 main = do
   nums <- fmap parse . readFile =<< getDataFileName "inputs/day15"
-  putStrLn "--- Test ---"
-  print (initGameState [0,3,6])
-  print (step $ initGameState [0,3,6])
-  print (step . step $ initGameState [0,3,6])
-  print (step . step . step $ initGameState [0,3,6])
-  print (step . step . step . step $ initGameState [0,3,6])
-  print (run [3,1,2] 2020)
-  mapM_ print [0,3]
-  mapM_ print (map prev . take 100 . iterate step $ initGameState [0, 3, 6])
-  putStrLn "--- Real ---"
-  print (run nums 2020)
+  -- putStrLn "--- Test ---"
+  -- print (initGameState [0,3,6])
+  -- print (step $ initGameState [0,3,6])
+  -- print (step . step $ initGameState [0,3,6])
+  -- print (step . step . step $ initGameState [0,3,6])
+  -- print (step . step . step . step $ initGameState [0,3,6])
+  -- print (run [3,1,2] 2020)
+  -- mapM_ print [0,3]
+  -- mapM_ print (map prev . take 100 . iterate step $ initGameState [0, 3, 6])
+  -- putStrLn "--- Real ---"
+  -- print (run nums 2020)
   print (run nums 300000)
